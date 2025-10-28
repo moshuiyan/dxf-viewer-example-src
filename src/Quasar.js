@@ -5,7 +5,6 @@ import "@quasar/extras/fontawesome-v5/fontawesome-v5.css"
 import Quasar, {
     Notify,
     ClosePopup,
-
     QBadge,
     QBtn,
     QCard,

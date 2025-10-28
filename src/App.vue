@@ -23,7 +23,7 @@
                     <q-btn dense flat label="URL" @click="urlDialog = true"/>
                 </template>
             </q-file>
-            <q-btn icon="help" label="About" class="q-ml-lg" @click="aboutDialog = true"></q-btn>
+            <q-btn icon="get_app" label="export" class="q-ml-lg" @click="exportGLTF"></q-btn>
             <q-space />
             <q-btn icon="fab fa-github" color="primary" label="dxf-viewer on GitHub" no-caps
                    class="q-mx-sm github" type="a"
@@ -34,7 +34,7 @@
         </q-toolbar>
     </q-header>
     <q-page-container>
-        <ViewerPage :dxfUrl="dxfUrl">
+        <ViewerPage :dxfUrl="dxfUrl" ref="viewerPage">
             <div v-if="inputFile === null"
                  class="centralUploader row justify-center items-center" >
                 <div class="col-auto" style="width: 300px;">
@@ -110,7 +110,14 @@ export default {
             isLocalFile: false,
             aboutDialog: false,
             urlDialog: false,
-            inputUrl: null
+            inputUrl: null,
+            fileName: '',
+        }
+    },
+    provide(){
+        return {
+            triggerExportGLTF: this.exportGLTF
+            
         }
     },
 
@@ -119,6 +126,9 @@ export default {
             if (!file) {
                 this._OnFileCleared()
                 return
+            }
+            if (file instanceof File) {
+                this.fileName = file.name
             }
             if (this.dxfUrl && this.isLocalFile) {
                 URL.revokeObjectURL(this.dxfUrl)
@@ -139,6 +149,10 @@ export default {
                 })
             }
         },
+        exportGLTF(){
+                this.$refs.viewerPage.$refs.viewer.exportGLTF(this.fileName )
+        },
+
 
         _OnUrl() {
             if (this.inputUrl === null) {

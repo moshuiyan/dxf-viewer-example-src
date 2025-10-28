@@ -14,12 +14,15 @@
 <script>
 import {DxfViewer} from "dxf-viewer"
 import * as three from "three"
+import {GLTFExporter} from "three/examples/jsm/exporters/GLTFExporter"
 import DxfViewerWorker from "worker-loader!./DxfViewerWorker"
 
+const gltfExporter = new GLTFExporter()
+const link = document.createElement('a')
 /** Events: all DxfViewer supported events (see DxfViewer.Subscribe()), prefixed with "dxf-". */
 export default {
     name: "DxfViewer",
-
+    inject:['triggerExportGLTF'],
     props: {
         dxfUrl: {
             default: null
@@ -34,7 +37,7 @@ export default {
         options: {
             default() {
                 return {
-                    clearColor: new three.Color("#fff"),
+                    clearColor: new three.Color("#000"),
                     autoResize: true,
                     colorCorrection: true,
                     sceneOptions: {
@@ -87,7 +90,52 @@ export default {
                 this.progressText = null
                 this.progress = null
                 this.curProgressPhase = null
+                
+
+                // console.log(this.GetViewer().GetOrigin())
             }
+        },
+        exportGLTF(name='dxfviewer') {
+            const scene = this.GetViewer().GetScene()
+            const group = new three.Group();
+            const layerMatMap = {};
+                scene.children.forEach(mesh => {
+                    const userData= {
+                        dxfLayer : mesh._dxfViewerLayer.name ,
+                        displayName :  mesh._dxfViewerLayer.displayName 
+                    }
+                    const key = userData.dxfLayer
+                    let newObject = null;
+                    if(!layerMatMap[key]){
+                        layerMatMap[key] = new three.MeshBasicMaterial({color: mesh._dxfViewerLayer.color})
+                    }
+                    mesh.material = layerMatMap[key]
+                    
+                    
+                    if(mesh.isMesh){
+                        newObject= new three.Mesh(mesh.geometry,layerMatMap[key])
+                    }
+                    else if(mesh.isLineSegments){
+                        newObject= new three.LineSegments(mesh.geometry,layerMatMap[key])
+                    }
+                    else if(mesh.isPoints){
+                        newObject= new three.Points(mesh.geometry,layerMatMap[key])
+                    }
+                    if(newObject){
+                        newObject.userData = userData
+                        group.add(newObject)
+                    }
+                })
+                console.log(group);
+                
+            gltfExporter.parse(group,(result)=>{
+                URL.revokeObjectURL(link.href)
+                link.href = URL.createObjectURL(new Blob([result], {type: "application/octet-stream"}))
+                link.download = `${name}_${Date.now()}`+ ".glb"
+                link.click()
+            },()=>{
+                console.error("Error during glTF export")
+            },{binary:true})
         },
 
         /** @return {DxfViewer} */
