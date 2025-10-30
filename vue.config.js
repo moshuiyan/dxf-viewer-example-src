@@ -3,7 +3,7 @@ const dxfViewerPackageJson = require("dxf-viewer/package.json")
 
 module.exports = {
     publicPath: process.env.NODE_ENV === "production"
-        ? "/dxf-viewer-example/"
+        ? "/dxf-viewer-example-src/"
         : "/",
     transpileDependencies: [
         /[\\\/]node_modules[\\\/]dxf-viewer[\\\/]/
